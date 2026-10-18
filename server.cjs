@@ -1,53 +1,62 @@
 const express = require('express');
-  const cors = require('cors');
-  const axios = require('axios');
+const cors = require('cors');
 
-  const app = express();
-  app.use(cors());
-  app.use(express.json());
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-  const STABILITY_API_KEY = "sk-6jmzf41PAriCMabeM6PHkgbPFu6ZbAXnWF15qUrDL9p6ewIz";
+app.get('/health', (req, res) => {
+    res.send('Servidor Pro Vivo y Conectado!');
+});
 
-  app.// Salud del servidor
-  app.get('/health', (req, res) => {
-      res.send('Servidor Pro Vivo!');
-  });
+app.post('/generate', async (req, res) => {
+    try {
+        const apiKey = process.env.STABILITY_API_KEY;
+        if (!apiKey) {
+            console.error("❌ Falta STABILITY_API_KEY en Render");
+            return res.status(500).send("Falta configurar STABILITY_API_KEY en Render.");
+        }
 
-  app.post('/generate', async (req, res) => {
-      try {
-          console.log("🚀 Llamando a la API estable de Stability...");
+        const promptText = req.body.inputs || "Hardcore techno beat, 170 BPM, studio quality";
+        console.log("🚀 Generando en Stable Audio 2:", promptText);
 
-          // URL ACTUALIZADA: Usamos la ruta v1 que es la más estable para audio
-          const response = await axios({
-              method: 'post',
-              url: "https://api.stability.ai/v1/generation/stable-audio/generate",
-              headers: {
-                  "Authorization": "Bearer " + STABILITY_API_KEY,
-                  "Accept": "audio/mpeg",
-                  "Content-Type": "application/json"
-              },
-              data: {
-                  prompt: req.body.inputs,
-                  seconds: 30
-              },
-              responseType: 'arraybuffer'
-          });
+        // Stability AI exige obligatoriamente multipart/form-data (FormData)
+        const formData = new FormData();
+        formData.append('prompt', promptText);
+        formData.append('output_format', 'mp3');
+        formData.append('duration', '30');
+        formData.append('model', 'stable-audio-2');
 
-          console.log("✅ ¡AUDIO RECIBIDO!");
-          res.send(Buffer.from(response.data));
-      } catch (err) {
-          console.error("❌ Detalle del error:");
-          if (err.response) {
-              console.error("Status:", err.response.status);
-              console.error("Data:", err.response.data.toString());
-          } else {
-              console.error("Mensaje:", err.message);
-          }
-          res.status(500).send("Error en la API: " + (err.response ? err.response.status : err.message));
-      }
-  });
+        const response = await fetch(
+            "https://api.stability.ai/v2beta/audio/stable-audio-2/text-to-audio",
+            {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Accept": "audio/*"
+                },
+                body: formData
+            }
+        );
 
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 SERVIDOR ACTIVO EN PUERTO ${PORT}`);
-  });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error("❌ Error de Stability AI:", response.status, errorText);
+            return res.status(response.status).send("Error de Stability AI: " + errorText);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        console.log("✅ ¡Canción generada con éxito!");
+        res.set('Content-Type', 'audio/mpeg');
+        res.send(Buffer.from(arrayBuffer));
+
+    } catch (err) {
+        console.error("💥 Error crítico en el servidor:", err.message);
+        res.status(500).send("Error interno: " + err.message);
+    }
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 SERVIDOR STABLE AUDIO 2 ACTIVO EN PUERTO ${PORT}`);
+});
