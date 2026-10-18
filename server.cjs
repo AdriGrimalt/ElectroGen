@@ -7,11 +7,10 @@ const express = require('express');
 
   const HF_TOKEN = "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";
 
-  // Función para intentar generar la música varias veces si la IA está cargando
   async function generateMusic(prompt, retries = 3) {
       for (let i = 0; i < retries; i++) {
           try {
-              console.log(`🚀 Intento ${i + 1} de generar música...`);
+              console.log(`🚀 Intento ${i + 1} para: ${prompt.substring(0, 20)}...`);
               const response = await fetch(
                   "https://api-inference.huggingface.co/models/facebook/musicgen-small",
                   {
@@ -29,36 +28,33 @@ const express = require('express');
               }
 
               if (response.status === 503) {
-                  console.log("😴 La IA está despertando... esperando 10 segundos...");
-                  await new Promise(resolve => setTimeout(resolve, 10000));
-                  continue; // Intenta de nuevo
+                  console.log("😴 IA despertando... esperando 15 seg...");
+                  await new Promise(resolve => setTimeout(resolve, 15000));
+                  continue;
               }
 
-              const err = await response.text();
-              throw new Error(err);
+              const errText = await response.text();
+              throw new Error(errText);
           } catch (e) {
               if (i === retries - 1) throw e;
-              console.log("⚠️ Error temporal, reintentando...");
+              console.log("⚠️ Error temporal, reintentando en 5 seg...");
               await new Promise(resolve => setTimeout(resolve, 5000));
           }
       }
-      throw new Error("La IA no respondió después de varios intentos.");
+      throw new Error("La IA no respondió.");
   }
 
   app.post('/generate', async (req, res) => {
       try {
-          const audioBuffer = await generateMusic(req.body.inputs);
-          console.log("✅ ¡Éxito! Música enviada al navegador.");
+          // Limpiamos el prompt para que sea más corto y rápido de procesar
+          const cleanPrompt = req.body.inputs.split(',').slice(0, 3).join(', ');
+          console.log("🎵 Generando: " + cleanPrompt);
+
+          const audioBuffer = await generateMusic(cleanPrompt);
+          console.log("✅ ¡SÍ! Audio recibido.");
           res.send(Buffer.from(audioBuffer));
       } catch (err) {
           console.error("💥 Error Final:", err.message);
           res.status(500).send(err.message);
       }
-  });
-
-  app.get('/health', (req, res) => res.send('Vivo!'));
-
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-      console.log(`🚀 SERVIDOR ESTABLE ACTIVO EN PUERTO ${PORT}`);
   });
