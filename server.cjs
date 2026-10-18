@@ -6,7 +6,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/health', (req, res) => {
-    res.send('Servidor Pro v2 Vivo!');
+    res.send('Servidor ElectroGen PRO Studio Vivo!');
 });
 
 app.post('/generate', async (req, res) => {
@@ -16,13 +16,15 @@ app.post('/generate', async (req, res) => {
             return res.status(500).send("Falta configurar STABILITY_API_KEY en Render.");
         }
 
-        const promptText = req.body.inputs || "Commercial electronic anthem, full track structure, intro, drop, breakdown, 170 BPM";
-        console.log("🎛️ Generando track elaborado en Stable Audio 2:", promptText);
+        const promptText = req.body.inputs || "Commercial electronic anthem, full track structure, 170 BPM";
+        const trackDuration = req.body.duration || "45";
+        
+        console.log(`🎛️ Generando track (${trackDuration}s):`, promptText);
 
         const formData = new FormData();
         formData.append('prompt', promptText);
         formData.append('output_format', 'mp3');
-        formData.append('duration', '45'); 
+        formData.append('duration', trackDuration); 
         formData.append('model', 'stable-audio-2');
 
         const response = await fetch(
@@ -52,4 +54,9 @@ app.post('/generate', async (req, res) => {
         console.error("💥 Error crítico:", err.message);
         res.status(500).send("Error interno: " + err.message);
     }
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 SERVIDOR STUDIO ACTIVO EN PUERTO ${PORT}`);
 });
