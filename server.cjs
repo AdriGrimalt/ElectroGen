@@ -5,42 +5,44 @@ const express = require('express');
   app.use(cors());
   app.use(express.json());
 
-  const HF_TOKEN = "hf_ZaxQNtttxOaCloAVyRrJnHwajGkpgwRJs";
+  // Tu API Key de Stability AI integrada
+  const STABILITY_API_KEY = "sk-6jmzf41PAriCMabeM6PHkgbPFu6ZbAXnWF15qUrDL9p6ewIz";
 
   app.post('/generate', async (req, res) => {
       try {
-          console.log("🚀 Intentando generar música...");
+          console.log("🚀 Solicitando audio profesional a Stable Audio...");
 
           const response = await fetch(
-              "https://api-inference.huggingface.co/models/facebook/musicgen-small",
+              "https://api.stability.ai/v2beta/stable-audio/generate",
               {
+                  method: "POST",
                   headers: {
-                      "Authorization": "Bearer " + HF_TOKEN,
+                      "Authorization": "Bearer " + STABILITY_API_KEY,
+                      "Accept": "audio/mpeg",
                       "Content-Type": "application/json"
                   },
-                  method: "POST",
-                  body: JSON.stringify({ inputs: req.body.inputs }),
+                  body: JSON.stringify({
+                      prompt: req.body.inputs,
+                      seconds: 30
+                  }),
               }
           );
 
           if (!response.ok) {
-              // Si la IA está cargando, le decimos al usuario que espere
-              if (response.status === 503) {
-                  return res.status(503).send("La IA está despertando... dale otra vez en 10 seg.");
-              }
-              const errText = await response.text();
-              return res.status(response.status).send("Error de la IA: " + errText);
+              const errorText = await response.text();
+              console.error("❌ Error Stability AI:", errorText);
+              return res.status(response.status).send("Error en la API profesional. Intenta de nuevo.");
           }
 
           const arrayBuffer = await response.arrayBuffer();
-          console.log("✅ ¡Música generada!");
+          console.log("✅ ¡Audio profesional recibido!");
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
-          console.error("💥 Error:", err);
-          res.status(500).send("Error de conexión.");
+          console.error("💥 Error crítico:", err);
+          res.status(500).send("Error de conexión con el servidor de música.");
       }
   });
 
   app.listen(3001, () => {
-      console.log('🚀 SERVIDOR ACTIVO EN PUERTO 3001');
+      console.log('🚀 SERVIDOR STABLE AUDIO ACTIVO EN PUERTO 3001');
   });
