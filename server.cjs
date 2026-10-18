@@ -8,34 +8,41 @@ const express = require('express');
   const STABILITY_API_KEY = "sk-6jmzf41PAriCMabeM6PHkgbPFu6ZbAXnWF15qUrDL9p6ewIz";
 
   app.get('/health', (req, res) => {
-      res.send('El servidor Pro está vivo!');
+      res.send('Servidor vivo!');
   });
 
   app.post('/generate', async (req, res) => {
       try {
           console.log("🚀 Solicitando audio profesional...");
+
           const response = await fetch(
-              "https://api-inference.huggingface.co/models/facebook/musicgen-small", // Volvemos a musicgen por
-  estabilidad inicial
+              "https://api.stability.ai/v2beta/stable-audio/generate",
               {
+                  method: "POST",
                   headers: {
                       "Authorization": "Bearer " + STABILITY_API_KEY,
+                      "Accept": "audio/mpeg",
                       "Content-Type": "application/json"
                   },
-                  method: "POST",
-                  body: JSON.stringify({ inputs: req.body.inputs }),
+                  body: JSON.stringify({
+                      prompt: req.body.inputs,
+                      seconds: 30
+                  }),
               }
           );
 
           if (!response.ok) {
-              const errText = await response.text();
-              return res.status(response.status).send("Error IA: " + errText);
+              const errorText = await response.text();
+              console.error("❌ Error API:", errorText);
+              return res.status(response.status).send("Error Stability AI: " + errorText);
           }
 
           const arrayBuffer = await response.arrayBuffer();
+          console.log("✅ ¡Audio recibido!");
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
-          res.status(500).send(err.message);
+          console.error("💥 Error:", err);
+          res.status(500).send("Error de conexión.");
       }
   });
 
