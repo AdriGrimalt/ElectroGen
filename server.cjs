@@ -9,38 +9,36 @@ const express = require('express');
 
   app.post('/generate', async (req, res) => {
       try {
-          console.log("🚀 Intentando conectar con la IA...");
+          console.log("🚀 Solicitando sonido rápido...");
 
-          // CAMBIO DE MODELO: de small a medium para evitar saturación
+          // Cambiamos a un modelo más ligero y rápido de cargar
           const response = await fetch(
-              "https://api-inference.huggingface.co/models/facebook/musicgen-medium",
+              "https://api-inference.huggingface.co/models/cvssp/musicgen-small",
               {
                   headers: {
                       "Authorization": "Bearer " + HF_TOKEN,
                       "Content-Type": "application/json"
                   },
                   method: "POST",
-                  body: JSON.stringify(req.body),
+                  body: JSON.stringify({ inputs: req.body.inputs }),
               }
           );
 
           if (!response.ok) {
               const errorText = await response.text();
-              console.error("❌ Error de la IA:", errorText);
-              return res.status(response.status).send(errorText);
+              console.error("❌ Error IA:", errorText);
+              return res.status(response.status).send("La IA está saturada. Reintenta en 5 seg.");
           }
 
           const arrayBuffer = await response.arrayBuffer();
-          console.log("✅ ¡Música recibida!");
+          console.log("✅ ¡Sonido recibido!");
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
-          console.error("💥 Error crítico:", err);
+          console.error("💥 Error:", err);
           res.status(500).send(err.message);
       }
   });
 
   app.listen(3001, () => {
-      console.log('--------------------------------------------------');
-      console.log('🚀 SERVIDOR ACTIVO EN http://localhost:3001');
-      console.log('--------------------------------------------------');
+      console.log('🚀 SERVIDOR RÁPIDO ACTIVO EN http://localhost:3001');
   });
