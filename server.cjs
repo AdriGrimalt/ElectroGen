@@ -9,7 +9,9 @@ const express = require('express');
 
   app.post('/generate', async (req, res) => {
       try {
-          console.log("🚀 Petición recibida...");
+          console.log("🚀 Intentando conectar con la IA...");
+
+          // Probamos con la API de Inference directa, la más rápida
           const response = await fetch(
               "https://api-inference.huggingface.co/models/facebook/musicgen-small",
               {
@@ -24,8 +26,12 @@ const express = require('express');
 
           if (!response.ok) {
               const errorText = await response.text();
-              console.error("❌ Error de la IA:", errorText);
-              return res.status(response.status).send("La IA está cargando, reintenta en 10 seg.");
+              console.error("❌ Error IA:", errorText);
+              // Si el error es 503, es que la IA está cargando
+              if (response.status === 503) {
+                  return res.status(503).send("IA cargando... espera 20 seg y dale otra vez.");
+              }
+              return res.status(response.status).send("Error en el servidor de la IA.");
           }
 
           const arrayBuffer = await response.arrayBuffer();
@@ -33,7 +39,7 @@ const express = require('express');
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
           console.error("💥 Error:", err);
-          res.status(500).send(err.message);
+          res.status(500).send("Error de conexión.");
       }
   });
 
