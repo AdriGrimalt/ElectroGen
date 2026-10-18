@@ -7,13 +7,9 @@ const express = require('express');
 
   const STABILITY_API_KEY = "sk-6jmzf41PAriCMabeM6PHkgbPFu6ZbAXnWF15qUrDL9p6ewIz";
 
-  app.get('/health', (req, res) => {
-      res.send('Servidor vivo!');
-  });
-
   app.post('/generate', async (req, res) => {
       try {
-          console.log("🚀 Solicitando audio profesional...");
+          console.log("🚀 Solicitud recibida para el prompt:", req.body.inputs);
 
           const response = await fetch(
               "https://api.stability.ai/v2beta/stable-audio/generate",
@@ -26,22 +22,22 @@ const express = require('express');
                   },
                   body: JSON.stringify({
                       prompt: req.body.inputs,
-                      seconds: 30
+                      // Quitamos seconds para dejar que la IA use el default y evitar errores de validación
                   }),
               }
           );
 
           if (!response.ok) {
               const errorText = await response.text();
-              console.error("❌ Error API:", errorText);
-              return res.status(response.status).send("Error Stability AI: " + errorText);
+              console.error("❌ RESPUESTA ERROR DE STABILITY:", errorText);
+              return res.status(response.status).send("Error API: " + errorText);
           }
 
           const arrayBuffer = await response.arrayBuffer();
-          console.log("✅ ¡Audio recibido!");
+          console.log("✅ ¡ÉXITO! Audio recibido.");
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
-          console.error("💥 Error:", err);
+          console.error("💥 ERROR CRÍTICO:", err);
           res.status(500).send("Error de conexión.");
       }
   });
