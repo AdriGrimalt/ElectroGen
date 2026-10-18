@@ -14,7 +14,7 @@ const express = require('express');
 
   app.post('/generate', async (req, res) => {
       try {
-          console.log("🚀 Solicitando a Stable Audio...");
+          console.log("🚀 Solicitando audio profesional...");
           const response = await axios({
               method: 'post',
               url: "https://api.stability.ai/v2beta/stable-audio/generate",
@@ -30,7 +30,7 @@ const express = require('express');
               responseType: 'arraybuffer'
           });
 
-          console.log("✅ Audio recibido!");
+          console.log("✅ ¡Audio recibido!");
           res.send(Buffer.from(response.data));
       } catch (err) {
           console.error("💥 Error:", err.message);
@@ -40,5 +40,5 @@ const express = require('express');
 
   const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
-      console.log(`🚀 SERVIDOR ACTIVO EN PUERTO ${PORT}`);
+      console.log(`🚀 SERVIDOR PRO ACTIVO EN PUERTO ${PORT}`);
   });
