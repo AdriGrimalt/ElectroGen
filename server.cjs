@@ -1,7 +1,4 @@
-// ESTA LÍNEA IGNORA LOS ERRORES DE CERTIFICADO SSL
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
-
-  const express = require('express');
+const express = require('express');
   const cors = require('cors');
 
   const app = express();
@@ -14,13 +11,13 @@
       try {
           console.log("🚀 Intentando conectar con la IA...");
 
+          // CAMBIO DE MODELO: de small a medium para evitar saturación
           const response = await fetch(
-              "https://18.164.153.131/models/facebook/musicgen-small",
+              "https://api-inference.huggingface.co/models/facebook/musicgen-medium",
               {
                   headers: {
                       "Authorization": "Bearer " + HF_TOKEN,
-                      "Content-Type": "application/json",
-                      "Host": "api-inference.huggingface.co"
+                      "Content-Type": "application/json"
                   },
                   method: "POST",
                   body: JSON.stringify(req.body),
@@ -34,7 +31,7 @@
           }
 
           const arrayBuffer = await response.arrayBuffer();
-          console.log("✅ ¡Música recibida con éxito!");
+          console.log("✅ ¡Música recibida!");
           res.send(Buffer.from(arrayBuffer));
       } catch (err) {
           console.error("💥 Error crítico:", err);
@@ -44,6 +41,6 @@
 
   app.listen(3001, () => {
       console.log('--------------------------------------------------');
-      console.log('🚀 SERVIDOR SSL-BYPASS ACTIVO EN http://localhost:3001');
+      console.log('🚀 SERVIDOR ACTIVO EN http://localhost:3001');
       console.log('--------------------------------------------------');
   });
